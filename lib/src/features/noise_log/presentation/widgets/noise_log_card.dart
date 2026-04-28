@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/models/noise_log_model.dart';
 import 'package:intl/intl.dart';
-import 'location_map.dart';
 
 class NoiseLogCard extends StatelessWidget {
   final NoiseLogModel noiseLog;
@@ -113,19 +112,7 @@ class NoiseLogCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            // Map Preview
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: SizedBox(
-                height: 200,
-                child: LocationMap(
-                  latitude: noiseLog.latitude,
-                  longitude: noiseLog.longitude,
-                  locationName: noiseLog.locationName,
-                  isInteractive: false,
-                ),
-              ),
-            ),
+            // Map Preview removed - only shown in LocationDetailScreen
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
