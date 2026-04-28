@@ -5,4 +5,6 @@ abstract class NoiseLogRepository {
   Future<List<NoiseLogModel>> fetchNoiseLogs(String userId);
   Future<void> updateNoiseLog(NoiseLogModel log);
   Future<void> deleteNoiseLog(String logId);
+  Future<void> deleteExpiredLogs();
+  Future<void> deleteOldLogsAtLocation(String userId, double latitude, double longitude);
 }

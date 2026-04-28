@@ -75,4 +75,42 @@ class NoiseLogLocalDataSource {
     final entity = _database.noiseLogs;
     await (entity.delete()..where((tbl) => tbl.id.equals(logId))).go();
   }
+
+  /// Delete all old logs at the same location (keeping only the latest one)
+  Future<void> deleteOldLogsAtLocation(String userId, double latitude, double longitude) async {
+    const locationThreshold = 0.00009; // ~10 meters
+    
+    // Fetch all logs at the same location
+    final query = _database.select(_database.noiseLogs)
+      ..where((tbl) => tbl.userId.equals(userId));
+    
+    final allLogs = await query.get();
+    
+    // Filter logs at same location
+    final logsAtLocation = allLogs.where((log) =>
+      (log.latitude - latitude).abs() <= locationThreshold &&
+      (log.longitude - longitude).abs() <= locationThreshold
+    ).toList();
+    
+    // Delete all logs at this location (the new one will replace them all)
+    for (final log in logsAtLocation) {
+      await deleteNoiseLog(log.id);
+    }
+  }
+
+  /// Delete logs older than 3 hours
+  Future<void> deleteExpiredLogs() async {
+    final now = DateTime.now();
+    final threeHoursAgo = now.subtract(const Duration(hours: 3));
+    
+    final entity = _database.noiseLogs;
+    await (entity.delete()..where((tbl) => tbl.timestamp.isSmallerThanValue(threeHoursAgo))).go();
+  }
+
+  /// Fetch logs for user and clean up expired logs
+  Future<List<NoiseLogModel>> fetchLogsForUserWithCleanup(String userId) async {
+    // Clean up expired logs first
+    await deleteExpiredLogs();
+    return fetchLogsForUser(userId);
+  }
 }
