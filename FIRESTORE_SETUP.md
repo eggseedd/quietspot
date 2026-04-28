@@ -246,20 +246,6 @@ The current implementation uses a bounding box with distance verification. For l
 - App automatically handles offline mode via Firestore's persistence
 - Logs are queued and synced when online
 
----
-
-## Next Steps
-
-1. ✅ Created Firestore data source
-2. ✅ Integrated with local repository
-3. ✅ Added sync manager
-4. ✅ Set up surrounding noise service
-5. 📋 **TODO**: Create map view UI to display nearby logs
-6. 📋 **TODO**: Add real-time listeners (optional, for live updates)
-7. 📋 **TODO**: Implement user preferences for map radius & refresh rate
-
----
-
 ## API Reference
 
 ### Repository Methods
