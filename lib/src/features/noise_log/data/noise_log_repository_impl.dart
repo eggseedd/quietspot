@@ -14,7 +14,7 @@ class NoiseLogRepositoryImpl implements NoiseLogRepository {
 
   @override
   Future<void> deleteNoiseLog(String logId) async {
-    // TODO: support soft delete and remote sync mapping.
+    await localDataSource.deleteNoiseLog(logId);
   }
 
   @override
@@ -24,6 +24,6 @@ class NoiseLogRepositoryImpl implements NoiseLogRepository {
 
   @override
   Future<void> updateNoiseLog(NoiseLogModel log) async {
-    // TODO: implement update logic in local datasource.
+    await localDataSource.updateNoiseLog(log);
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/providers.dart';
 import 'add_noise_log_screen.dart';
+import 'edit_noise_log_screen.dart';
 import 'widgets/noise_log_card.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -68,7 +69,38 @@ class HomeScreen extends ConsumerWidget {
             itemCount: noiseLogs.length,
             itemBuilder: (context, index) {
               final log = noiseLogs[index];
-              return NoiseLogCard(noiseLog: log);
+              return NoiseLogCard(
+                noiseLog: log,
+                onEdit: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => EditNoiseLogScreen(noiseLog: log),
+                    ),
+                  );
+                },
+                onDelete: () async {
+                  try {
+                    final repository = ref.read(noiseLogRepositoryProvider);
+                    await repository.deleteNoiseLog(log.id);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Noise log deleted')),
+                      );
+                      // Refresh the data
+                      final currentUserId = ref.read(currentUserIdProvider);
+                      if (currentUserId != null) {
+                        ref.refresh(noiseLogsProvider(currentUserId));
+                      }
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Failed to delete: $e')),
+                      );
+                    }
+                  }
+                },
+              );
             },
           );
         },

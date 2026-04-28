@@ -50,4 +50,29 @@ class NoiseLogLocalDataSource {
       );
     }).toList();
   }
+
+  Future<void> updateNoiseLog(NoiseLogModel log) async {
+    final entity = _database.noiseLogs;
+    await _database.update(entity).replace(
+      NoiseLogsCompanion(
+        id: Value(log.id),
+        userId: Value(log.userId),
+        timestamp: Value(log.timestamp),
+        latitude: Value(log.latitude),
+        longitude: Value(log.longitude),
+        locationName: Value(log.locationName),
+        rmsValue: Value(log.rmsValue),
+        estimatedDb: Value(log.estimatedDb),
+        classification: Value(log.classification.name),
+        manualLabel: Value(log.manualLabel),
+        notes: Value(log.notes),
+        isDeleted: Value(log.isDeleted),
+      ),
+    );
+  }
+
+  Future<void> deleteNoiseLog(String logId) async {
+    final entity = _database.noiseLogs;
+    await (entity.delete()..where((tbl) => tbl.id.equals(logId))).go();
+  }
 }

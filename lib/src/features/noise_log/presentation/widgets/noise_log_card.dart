@@ -4,10 +4,14 @@ import 'package:intl/intl.dart';
 
 class NoiseLogCard extends StatelessWidget {
   final NoiseLogModel noiseLog;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   const NoiseLogCard({
     super.key,
     required this.noiseLog,
+    this.onEdit,
+    this.onDelete,
   });
 
   Color _getClassificationColor() {
@@ -129,6 +133,50 @@ class NoiseLogCard extends StatelessWidget {
                 ),
               ),
             ],
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if (onEdit != null)
+                  TextButton.icon(
+                    onPressed: onEdit,
+                    icon: const Icon(Icons.edit, size: 18),
+                    label: const Text('Edit'),
+                  ),
+                if (onDelete != null)
+                  TextButton.icon(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Delete Noise Log?'),
+                          content: const Text(
+                            'Are you sure you want to delete this noise log? This action cannot be undone.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                onDelete?.call();
+                              },
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.red,
+                              ),
+                              child: const Text('Delete'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.delete, size: 18),
+                    label: const Text('Delete'),
+                  ),
+              ],
+            ),
           ],
         ),
       ),
