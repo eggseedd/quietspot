@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 import '../../data/models/noise_log_model.dart';
 import 'package:intl/intl.dart';
+import 'location_map.dart';
 
 class NoiseLogCard extends StatelessWidget {
   final NoiseLogModel noiseLog;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+  final VoidCallback? onViewLocation;
 
   const NoiseLogCard({
     super.key,
     required this.noiseLog,
     this.onEdit,
     this.onDelete,
+    this.onViewLocation,
   });
 
   Color _getClassificationColor() {
@@ -108,6 +111,34 @@ class NoiseLogCard extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 12),
+            // Map Preview
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: SizedBox(
+                height: 200,
+                child: LocationMap(
+                  latitude: noiseLog.latitude,
+                  longitude: noiseLog.longitude,
+                  locationName: noiseLog.locationName,
+                  isInteractive: false,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  // This will be used by parent to navigate to location detail
+                  if (onViewLocation != null) {
+                    onViewLocation?.call();
+                  }
+                },
+                icon: const Icon(Icons.location_on),
+                label: const Text('View Location Details'),
+              ),
             ),
             if (noiseLog.notes != null && noiseLog.notes!.isNotEmpty) ...[
               const SizedBox(height: 12),

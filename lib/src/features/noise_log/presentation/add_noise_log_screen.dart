@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../../../shared/providers.dart';
 import '../data/models/noise_log_model.dart';
+import 'widgets/location_map.dart';
 
 class AddNoiseLogScreen extends ConsumerStatefulWidget {
   const AddNoiseLogScreen({super.key});
@@ -39,10 +40,17 @@ class _AddNoiseLogScreenState extends ConsumerState<AddNoiseLogScreen> {
     try {
       final locationService = ref.read(locationServiceProvider);
       final position = await locationService.getCurrentPosition();
+      
+      // Get location name from coordinates
+      final locationName = await locationService.getLocationName(
+        position.latitude,
+        position.longitude,
+      );
+      
       setState(() {
         _latitude = position.latitude;
         _longitude = position.longitude;
-        _currentLocation = 'Location loaded';
+        _currentLocation = locationName;
       });
     } catch (e) {
       if (mounted) {
@@ -218,32 +226,46 @@ class _AddNoiseLogScreenState extends ConsumerState<AddNoiseLogScreen> {
               const SizedBox(height: 24),
 
               // Location Section
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.location_on, color: Colors.grey[600]),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Location',
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                      ],
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.location_on, color: Colors.grey[600]),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Your Location',
+                        style: Theme.of(context).textTheme.titleSmall,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: SizedBox(
+                      height: 200,
+                      child: _latitude != null && _longitude != null
+                          ? LocationMap(
+                              latitude: _latitude!,
+                              longitude: _longitude!,
+                              locationName: _currentLocation ?? 'Current Location',
+                              isInteractive: true,
+                            )
+                          : Container(
+                              color: Colors.grey[200],
+                              child: const Center(
+                                child: SizedBox(
+                                  width: 40,
+                                  height: 40,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              ),
+                            ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _currentLocation ?? 'Loading location...',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
               const SizedBox(height: 24),
 

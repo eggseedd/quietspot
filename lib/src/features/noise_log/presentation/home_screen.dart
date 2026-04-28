@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/providers.dart';
 import 'add_noise_log_screen.dart';
 import 'edit_noise_log_screen.dart';
+import 'location_detail_screen.dart';
 import 'widgets/noise_log_card.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -71,6 +72,13 @@ class HomeScreen extends ConsumerWidget {
               final log = noiseLogs[index];
               return NoiseLogCard(
                 noiseLog: log,
+                onViewLocation: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => LocationDetailScreen(noiseLog: log),
+                    ),
+                  );
+                },
                 onEdit: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
