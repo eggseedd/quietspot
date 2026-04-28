@@ -164,7 +164,7 @@ See [DOCUMENTATION.md#database-schema](DOCUMENTATION.md#database-schema) for com
 
 ### Customization
 - Sync interval: Modify `firestore_sync_manager.dart` (default: 30 min)
-- Noise classification thresholds: `lib/src/core/constants/`
+- Noise classification thresholds and classifier: `lib/src/features/noise_log/presentation/add_noise_log_screen.dart` (quiet <50 dB, moderate 50-69 dB, noisy >=70 dB)
 - UI themes: `lib/src/shared/widgets/`
 
 ## Troubleshooting

@@ -52,22 +52,20 @@
 #### 2. **Noise Recording & Logging**
 - Real-time noise level capture using device microphone
 - Automatic dB (decibel) estimation
-- Manual classification options:
-  - Quiet
-  - Moderate
-  - Noisy
-  - Very Noisy
+ - Manual classification options (as implemented):
+  - Quiet (< 50 dB)
+  - Moderate (50 - 69 dB)
+  - Noisy (>= 70 dB)
 - Custom note tagging
 - Timestamp and location tracking
 - Edit previously recorded logs
 
 #### 3. **Map Visualization**
 - Interactive map displaying all noise logs
-- Color-coded markers based on noise levels:
-  - Green: Quiet (< 60 dB)
-  - Yellow: Moderate (60-75 dB)
-  - Orange: Noisy (75-90 dB)
-  - Red: Very Noisy (> 90 dB)
+ - Color-coded markers based on noise levels (as implemented):
+  - Green: Quiet (< 50 dB)
+  - Orange: Moderate (50 - 69 dB)
+  - Red: Noisy (>= 70 dB)
 - Real-time surrounding noise data
 - Location details for each noise entry
 
@@ -345,10 +343,9 @@ flutter run
 - Navigate to the "Map" tab
 - View noise levels across different locations
 - **Color Legend**:
-  - 🟢 Green: Quiet area (< 60 dB) - Library, bedroom
-  - 🟡 Yellow: Moderate (60-75 dB) - Office, restaurant
-  - 🟠 Orange: Noisy (75-90 dB) - Traffic, construction
-  - 🔴 Red: Very Noisy (> 90 dB) - Concert, heavy machinery
+  - 🟢 Green: Quiet area (< 50 dB) - Library, bedroom
+  - 🟠 Orange: Moderate (50 - 69 dB) - Office, restaurant
+  - 🔴 Red: Noisy (>= 70 dB) - Traffic, construction, heavy machinery
 - Tap markers to view location details
 - Tap "View All" to see complete entries
 
@@ -361,10 +358,9 @@ flutter run
 
 | Classification | dB Range | Examples |
 |---|---|---|
-| Quiet | < 60 dB | Whisper, library, bedroom |
-| Moderate | 60-75 dB | Normal conversation, office |
-| Noisy | 75-90 dB | Busy traffic, restaurant |
-| Very Noisy | > 90 dB | Concert, lawnmower, drill |
+| Quiet | < 50 dB | Whisper, library, bedroom |
+| Moderate | 50 - 69 dB | Normal conversation, office |
+| Noisy | >= 70 dB | Busy traffic, construction, loud vehicles |
 
 ### Tips for Accurate Measurements
 
