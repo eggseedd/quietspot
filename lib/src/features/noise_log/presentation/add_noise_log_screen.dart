@@ -80,6 +80,17 @@ class _AddNoiseLogScreenState extends ConsumerState<AddNoiseLogScreen> {
         _isRecording = false;
       });
 
+      // Show notification after recording
+      final notificationService = ref.read(notificationServiceProvider);
+      final dbValue = _estimatedDb?.toStringAsFixed(1) ?? "0";
+      final classification = _classifyNoise(_estimatedDb ?? 0).name.toUpperCase();
+      
+      await notificationService.showNotification(
+        id: DateTime.now().millisecondsSinceEpoch.hashCode,
+        title: 'Noise Level Recorded',
+        body: '$dbValue dB - $classification',
+      );
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Recorded: ${_estimatedDb?.toStringAsFixed(1) ?? "0"} dB')),
