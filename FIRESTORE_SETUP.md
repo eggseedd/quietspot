@@ -246,6 +246,8 @@ The current implementation uses a bounding box with distance verification. For l
 - App automatically handles offline mode via Firestore's persistence
 - Logs are queued and synced when online
 
+---
+
 ## API Reference
 
 ### Repository Methods
