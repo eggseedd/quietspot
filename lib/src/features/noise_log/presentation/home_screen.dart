@@ -4,6 +4,7 @@ import '../../../shared/providers.dart';
 import 'add_noise_log_screen.dart';
 import 'edit_noise_log_screen.dart';
 import 'location_detail_screen.dart';
+import 'surrounding_noise_map_screen.dart';
 import 'widgets/noise_log_card.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -28,6 +29,17 @@ class HomeScreen extends ConsumerWidget {
         title: const Text('QuietSpot'),
         elevation: 0,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.map),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const SurroundingNoiseMapScreen(),
+                ),
+              );
+            },
+            tooltip: 'View surrounding noise map',
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
