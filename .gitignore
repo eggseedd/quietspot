@@ -33,6 +33,23 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Flutter/Dart additional generated files
+.flutter-plugins
+.packages
+.metadata
+
+# Local environment / IDE
+/local.properties
+**/local.properties
+
+# Local config, secrets, and editor settings
+.vscode/
+.env
+.env.*
+**/google-services.json
+/.gradle
+.idea/workspace.xml
+
 # Symbolication related
 app.*.symbols
 
