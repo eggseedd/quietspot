@@ -99,7 +99,7 @@ lib/
 
 ## Screenshots & Demo
 
-📹 **[Watch Full App Demonstration](DOCUMENTATION.md#video-demonstration)** (Placeholder - to be recorded)
+📹 **[Watch Full App Demonstration](DOCUMENTATION.md#video-demonstration)** 
 
 Features showcase video covering:
 - User registration & login
