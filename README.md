@@ -9,10 +9,10 @@ A mobile application built with Flutter that helps users monitor noise pollution
 ✨ **Core Capabilities**
 - 📊 Real-time noise level recording (dB measurement)
 - 🗺️ Interactive map visualization with color-coded markers
-- 📱 Offline-first local database with cloud synchronization
+- 📱 Offline-first local database with cloud synchronization support
 - 🔐 Secure user authentication via Firebase
 - 📍 GPS location tracking and address geocoding
-- 📤 Automatic background sync every 30 minutes
+- ⚙️ Firestore sync manager available (manual startup required)
 - 🔔 Local push notifications
 - 📝 Edit and manage noise records
 - 📈 Historical data analysis and trends

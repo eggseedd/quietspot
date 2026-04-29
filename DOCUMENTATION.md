@@ -77,12 +77,12 @@
 - Export data (placeholder for future)
 
 #### 5. **Notifications**
-- Local push notifications for reminders
+- Local push notifications for recording events and status updates
 - Sync status notifications
 - Data deletion confirmations
 
 #### 6. **Cloud Synchronization**
-- Automatic background sync to Firestore every 30 minutes
+- Firestore sync manager is implemented, but periodic sync is not automatically started by the app
 - Real-time data fetching from nearby locations
 - Offline-first approach with local database
 - Conflict resolution and data consistency
@@ -129,8 +129,8 @@ Local Database (Drift SQLite)
 
 1. **Repository Pattern**: Abstracts data sources (local & remote)
 2. **Provider Pattern (Riverpod)**: State management and dependency injection
-3. **Offline-First**: Local database as source of truth, with cloud sync
-4. **Background Sync**: Automatic data synchronization every 30 minutes
+3. **Offline-First**: Local database as source of truth, with cloud sync support
+4. **Background Sync**: Firestore sync manager is implemented, but periodic sync is not automatically started by the app
 5. **Service Layer**: Encapsulates business logic (notifications, geolocation)
 
 ---
@@ -330,7 +330,7 @@ flutter run
 - Tap "Save" to record
 
 #### 3. **Viewing Your History**
-- Navigate to the "History" tab
+- Open the home screen to review saved recordings
 - Swipe through your previous recordings
 - Tap any entry to see:
   - Exact dB level
@@ -340,14 +340,13 @@ flutter run
   - Classification
 
 #### 4. **Exploring the Map**
-- Navigate to the "Map" tab
-- View noise levels across different locations
+- Tap the map icon in the home screen app bar
+- View noise levels across nearby locations
 - **Color Legend**:
   - 🟢 Green: Quiet area (< 50 dB) - Library, bedroom
   - 🟠 Orange: Moderate (50 - 69 dB) - Office, restaurant
   - 🔴 Red: Noisy (>= 70 dB) - Traffic, construction, heavy machinery
 - Tap markers to view location details
-- Tap "View All" to see complete entries
 
 #### 5. **Editing & Deleting Records**
 - From history, swipe left on any entry
@@ -372,10 +371,10 @@ flutter run
 
 ### Data Syncing
 
-- The app automatically syncs data every **30 minutes**
-- Manual sync available in settings (pull-to-refresh)
-- Offline mode: Records are saved locally and synced when online
-- Green sync indicator shows successful synchronization
+- The app stores entries locally and supports Firestore upload
+- Background sync logic is implemented in `FirestoreSyncManager`, but the app does not currently auto-start periodic sync
+- Manual sync can be triggered by calling `syncNoiseLogsProvider(userId)` or using `FirestoreSyncManager.syncNow`
+- Offline mode: Records are saved locally and can sync when a sync operation is started
 
 ---
 
@@ -907,7 +906,7 @@ This project is licensed under the MIT License - see LICENSE file for details.
 - Map visualization
 - Firestore integration
 - Offline-first architecture
-- Background sync (30 min intervals)
+- Firestore sync manager available (manual startup required)
 - User authentication
 
 ### Planned Features (v1.1.0+)
