@@ -421,8 +421,6 @@ class _SurroundingNoiseMapScreenState
             ),
             const SizedBox(height: 20),
             _buildDetailRow('Noise Level', '${log.estimatedDb.toStringAsFixed(1)} dB', Colors.blue),
-            const SizedBox(height: 12),
-            _buildDetailRow('RMS Value', log.rmsValue.toStringAsFixed(3), Colors.purple),
             if (log.manualLabel != null) ...[
               const SizedBox(height: 12),
               _buildDetailRow('Manual Label', log.manualLabel!, Colors.green),
@@ -511,7 +509,7 @@ class _SurroundingNoiseMapScreenState
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            '${_radiusKm.toStringAsFixed(1)} km',
+            '${(_radiusKm / 2.0).toStringAsFixed(1)}x',
             style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
           ),
           const SizedBox(height: 8),

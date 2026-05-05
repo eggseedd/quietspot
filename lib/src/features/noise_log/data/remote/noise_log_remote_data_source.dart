@@ -63,17 +63,21 @@ class NoiseLogRemoteDataSource {
   }
 
   /// Fetch all noise logs from Firestore
+  /// Filters isDeleted and sorts in app to avoid composite index requirement
   Future<List<NoiseLogModel>> fetchAllNoiseLogs() async {
     try {
       final snapshot = await _firestore
           .collection(_noiseLogs)
-          .where('isDeleted', isEqualTo: false)
-          .orderBy('timestamp', descending: true)
           .get();
 
-      return snapshot.docs.map((doc) {
-        return _noiseLogFromFirestore(doc);
-      }).toList();
+      final logs = snapshot.docs
+          .map((doc) => _noiseLogFromFirestore(doc))
+          .where((log) => !log.isDeleted)
+          .toList();
+      
+      // Sort by timestamp descending in app
+      logs.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      return logs;
     } catch (e) {
       throw Exception('Failed to fetch noise logs: $e');
     }
@@ -81,6 +85,8 @@ class NoiseLogRemoteDataSource {
 
   /// Fetch noise logs within a geographic radius
   /// Uses simple distance calculation - for large datasets, consider geohashing
+  /// Deduplicates logs at the same location, keeping only the latest one
+  /// Filters isDeleted in app to avoid composite index requirement
   Future<List<NoiseLogModel>> fetchNearbyNoiseLogs({
     required double latitude,
     required double longitude,
@@ -94,17 +100,24 @@ class NoiseLogRemoteDataSource {
 
       final snapshot = await _firestore
           .collection(_noiseLogs)
-          .where('isDeleted', isEqualTo: false)
           .where('latitude',
               isGreaterThanOrEqualTo: latitude - latDelta,
               isLessThanOrEqualTo: latitude + latDelta)
           .orderBy('latitude')
           .get();
 
-      // Filter by longitude and calculate exact distance
+      // Filter by longitude, isDeleted, age, and calculate exact distance
       final nearbyLogs = snapshot.docs
           .map((doc) => _noiseLogFromFirestore(doc))
           .where((log) {
+            // Check if deleted
+            if (log.isDeleted) return false;
+
+            // Check if log is older than 3 hours
+            final now = DateTime.now();
+            final threeHoursAgo = now.subtract(const Duration(hours: 3));
+            if (log.timestamp.isBefore(threeHoursAgo)) return false;
+
             // Check longitude bounds
             if (log.longitude < longitude - lonDelta || 
                 log.longitude > longitude + lonDelta) {
@@ -123,25 +136,32 @@ class NoiseLogRemoteDataSource {
           })
           .toList();
 
-      return nearbyLogs;
+      // Deduplicate logs at the same location, keeping only the latest one
+      final deduplicatedLogs = _deduplicateLogsByLocation(nearbyLogs);
+
+      return deduplicatedLogs;
     } catch (e) {
       throw Exception('Failed to fetch nearby noise logs: $e');
     }
   }
 
   /// Fetch noise logs for a specific user
+  /// Filters isDeleted and sorts in app to avoid composite index requirement
   Future<List<NoiseLogModel>> fetchLogsForUser(String userId) async {
     try {
       final snapshot = await _firestore
           .collection(_noiseLogs)
           .where('userId', isEqualTo: userId)
-          .where('isDeleted', isEqualTo: false)
-          .orderBy('timestamp', descending: true)
           .get();
 
-      return snapshot.docs.map((doc) {
-        return _noiseLogFromFirestore(doc);
-      }).toList();
+      final logs = snapshot.docs
+          .map((doc) => _noiseLogFromFirestore(doc))
+          .where((log) => !log.isDeleted)
+          .toList();
+      
+      // Sort by timestamp descending in app
+      logs.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      return logs;
     } catch (e) {
       throw Exception('Failed to fetch logs for user: $e');
     }
@@ -253,5 +273,42 @@ class NoiseLogRemoteDataSource {
 
   double _degreesToRadians(double degrees) {
     return degrees * 3.141592653589793 / 180;
+  }
+
+  /// Deduplicate logs at the same location, keeping only the latest one
+  /// Uses ~10 meters threshold (0.00009 degrees) to group logs at the same location
+  List<NoiseLogModel> _deduplicateLogsByLocation(List<NoiseLogModel> logs) {
+    const locationThreshold = 0.00009; // ~10 meters
+    final Map<String, NoiseLogModel> locationMap = {};
+
+    // Sort by timestamp descending so latest logs are processed first
+    final sortedLogs = [...logs]..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+
+    for (final log in sortedLogs) {
+      // Find if we already have a log at this location
+      bool foundExisting = false;
+      for (final key in locationMap.keys) {
+        final existingLog = locationMap[key]!;
+        final latDiff = (existingLog.latitude - log.latitude).abs();
+        final lonDiff = (existingLog.longitude - log.longitude).abs();
+
+        if (latDiff <= locationThreshold && lonDiff <= locationThreshold) {
+          // Same location found, don't add this one (already have the latest)
+          foundExisting = true;
+          break;
+        }
+      }
+
+      if (!foundExisting) {
+        // Create a unique key for this location
+        final locationKey = '${log.latitude.toStringAsFixed(5)}_${log.longitude.toStringAsFixed(5)}';
+        locationMap[locationKey] = log;
+      }
+    }
+
+    // Return the deduplicated logs, sorted by timestamp descending
+    final result = locationMap.values.toList();
+    result.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    return result;
   }
 }

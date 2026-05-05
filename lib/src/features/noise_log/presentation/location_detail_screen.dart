@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../data/models/noise_log_model.dart';
 import 'widgets/location_map.dart';
+import 'edit_noise_log_screen.dart';
+import '../../../shared/providers.dart';
 
-class LocationDetailScreen extends StatelessWidget {
+class LocationDetailScreen extends ConsumerStatefulWidget {
   final NoiseLogModel noiseLog;
 
   const LocationDetailScreen({
@@ -11,8 +14,14 @@ class LocationDetailScreen extends StatelessWidget {
     required this.noiseLog,
   });
 
+  @override
+  ConsumerState<LocationDetailScreen> createState() =>
+      _LocationDetailScreenState();
+}
+
+class _LocationDetailScreenState extends ConsumerState<LocationDetailScreen> {
   Color _getClassificationColor() {
-    switch (noiseLog.classification) {
+    switch (widget.noiseLog.classification) {
       case NoiseClassification.quiet:
         return Colors.green;
       case NoiseClassification.moderate:
@@ -23,7 +32,7 @@ class LocationDetailScreen extends StatelessWidget {
   }
 
   String _getClassificationLabel() {
-    switch (noiseLog.classification) {
+    switch (widget.noiseLog.classification) {
       case NoiseClassification.quiet:
         return 'Quiet';
       case NoiseClassification.moderate:
@@ -33,10 +42,31 @@ class LocationDetailScreen extends StatelessWidget {
     }
   }
 
+  Future<void> _deleteLog() async {
+    try {
+      final repository = ref.read(noiseLogRepositoryProvider);
+      await repository.deleteNoiseLog(widget.noiseLog.id);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Noise log deleted')),
+        );        // Invalidate the provider to trigger a refresh
+        ref.invalidate(noiseLogsProvider);
+        // Pop back to home        Navigator.of(context).pop();
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete: $e')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final dateFormatter = DateFormat('MMM d, yyyy h:mm a');
     final color = _getClassificationColor();
+    final noiseLog = widget.noiseLog;
 
     return Scaffold(
       appBar: AppBar(
@@ -84,6 +114,14 @@ class LocationDetailScreen extends StatelessWidget {
                           ],
                         ),
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Classification and dB Level side by side
+                  Row(
+                    children: [
+                      // Classification Badge
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
@@ -103,53 +141,8 @@ class LocationDetailScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Coordinates
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100],
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.pin_drop, 
-                              color: Colors.blue[600],
-                              size: 18,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Coordinates',
-                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Latitude: ${noiseLog.latitude.toStringAsFixed(6)}',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Longitude: ${noiseLog.longitude.toStringAsFixed(6)}',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Measurements
-                  Row(
-                    children: [
+                      const SizedBox(width: 16),
+                      // dB Level
                       Expanded(
                         child: Container(
                           padding: const EdgeInsets.all(12),
@@ -174,49 +167,12 @@ class LocationDetailScreen extends StatelessWidget {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 4),
                               Text(
                                 '${noiseLog.estimatedDb.toStringAsFixed(1)} dB',
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.blue[600],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.orange[50],
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.orange[200]!),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(Icons.equalizer,
-                                    color: Colors.orange[600],
-                                    size: 16,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'RMS Value',
-                                    style: Theme.of(context).textTheme.labelSmall,
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                noiseLog.rmsValue.toStringAsFixed(3),
-                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.orange[600],
                                 ),
                               ),
                             ],
@@ -261,7 +217,57 @@ class LocationDetailScreen extends StatelessWidget {
                         ],
                       ),
                     ),
+                    const SizedBox(height: 16),
                   ],
+
+                  // Action Buttons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => EditNoiseLogScreen(noiseLog: noiseLog),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.edit, size: 18),
+                        label: const Text('Edit'),
+                      ),
+                      TextButton.icon(
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Delete Noise Log?'),
+                              content: const Text(
+                                'Are you sure you want to delete this noise log? This action cannot be undone.',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () async {
+                                    Navigator.pop(context);
+                                    await _deleteLog();
+                                  },
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: Colors.red,
+                                  ),
+                                  child: const Text('Delete'),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.delete, size: 18),
+                        label: const Text('Delete'),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),

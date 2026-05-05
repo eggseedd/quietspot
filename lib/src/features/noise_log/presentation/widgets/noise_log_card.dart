@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 class NoiseLogCard extends StatelessWidget {
   final NoiseLogModel noiseLog;
   final VoidCallback? onEdit;
-  final VoidCallback? onDelete;
+  final Function()? onDelete;
   final VoidCallback? onViewLocation;
 
   const NoiseLogCard({
@@ -70,6 +70,13 @@ class NoiseLogCard extends StatelessWidget {
                     ],
                   ),
                 ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Classification and dB Level side by side
+            Row(
+              children: [
+                // Classification Badge
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 12,
@@ -89,24 +96,42 @@ class NoiseLogCard extends StatelessWidget {
                     ),
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
+                const SizedBox(width: 16),
+                // dB Level
                 Expanded(
-                  child: _InfoTile(
-                    label: 'dB Level',
-                    value: '${noiseLog.estimatedDb.toStringAsFixed(1)} dB',
-                    icon: Icons.volume_up,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _InfoTile(
-                    label: 'RMS Value',
-                    value: noiseLog.rmsValue.toStringAsFixed(3),
-                    icon: Icons.equalizer,
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.blue[50],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.blue[200]!),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.volume_up,
+                              color: Colors.blue[600],
+                              size: 16,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'dB Level',
+                              style: Theme.of(context).textTheme.labelSmall,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${noiseLog.estimatedDb.toStringAsFixed(1)} dB',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue[600],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -130,22 +155,36 @@ class NoiseLogCard extends StatelessWidget {
             if (noiseLog.notes != null && noiseLog.notes!.isNotEmpty) ...[
               const SizedBox(height: 12),
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: Colors.amber[50],
                   borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.amber[200]!),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Notes',
-                      style: Theme.of(context).textTheme.labelSmall,
+                    Row(
+                      children: [
+                        Icon(Icons.note,
+                          color: Colors.amber[600],
+                          size: 18,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Notes',
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 8),
                     Text(
                       noiseLog.notes!,
                       style: Theme.of(context).textTheme.bodySmall,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -177,9 +216,9 @@ class NoiseLogCard extends StatelessWidget {
                               child: const Text('Cancel'),
                             ),
                             TextButton(
-                              onPressed: () {
+                              onPressed: () async {
                                 Navigator.pop(context);
-                                onDelete?.call();
+                                await onDelete?.call();
                               },
                               style: TextButton.styleFrom(
                                 foregroundColor: Colors.red,

@@ -185,29 +185,7 @@ class _EditNoiseLogScreenState extends ConsumerState<EditNoiseLogScreen> {
                             ],
                           ),
                         ),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Icon(Icons.equalizer,
-                                      size: 16, color: Colors.grey[600]),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'RMS Value',
-                                    style: Theme.of(context).textTheme.labelSmall,
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                widget.noiseLog.rmsValue.toStringAsFixed(3),
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                            ],
-                          ),
-                        ),
+
                       ],
                     ),
                   ],

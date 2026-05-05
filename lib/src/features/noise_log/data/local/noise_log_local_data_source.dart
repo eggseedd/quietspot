@@ -24,9 +24,27 @@ class NoiseLogLocalDataSource {
     );
   }
 
+  /// Insert or update a noise log (for syncing from Firestore)
+  Future<void> insertOrUpdateNoiseLog(NoiseLogModel log) async {
+    // Check if log already exists
+    final existingLog = await _database.select(_database.noiseLogs)
+        ..where((tbl) => tbl.id.equals(log.id))
+        ..limit(1);
+    
+    final logExists = (await existingLog.get()).isNotEmpty;
+
+    if (logExists) {
+      // Update existing log
+      await updateNoiseLog(log);
+    } else {
+      // Insert new log
+      await insertNoiseLog(log);
+    }
+  }
+
   Future<List<NoiseLogModel>> fetchLogsForUser(String userId) async {
     final query = _database.select(_database.noiseLogs)
-      ..where((tbl) => tbl.userId.equals(userId))
+      ..where((tbl) => tbl.userId.equals(userId) & tbl.isDeleted.equals(false))
       ..orderBy([(tbl) => OrderingTerm(expression: tbl.timestamp, mode: OrderingMode.desc)]);
 
     final rows = await query.get();
@@ -71,13 +89,16 @@ class NoiseLogLocalDataSource {
     );
   }
 
+  /// Soft delete a noise log by marking it as deleted
   Future<void> deleteNoiseLog(String logId) async {
     final entity = _database.noiseLogs;
-    await (entity.delete()..where((tbl) => tbl.id.equals(logId))).go();
+    await (entity.update()..where((tbl) => tbl.id.equals(logId)))
+        .write(const NoiseLogsCompanion(isDeleted: Value(true)));
   }
 
   /// Delete all old logs at the same location (keeping only the latest one)
-  Future<void> deleteOldLogsAtLocation(String userId, double latitude, double longitude) async {
+  /// Returns the list of deleted log IDs
+  Future<List<String>> deleteOldLogsAtLocation(String userId, double latitude, double longitude) async {
     const locationThreshold = 0.00009; // ~10 meters
     
     // Fetch all logs at the same location
@@ -92,10 +113,16 @@ class NoiseLogLocalDataSource {
       (log.longitude - longitude).abs() <= locationThreshold
     ).toList();
     
+    // Collect IDs of logs to delete
+    final deletedIds = <String>[];
+    
     // Delete all logs at this location (the new one will replace them all)
     for (final log in logsAtLocation) {
       await deleteNoiseLog(log.id);
+      deletedIds.add(log.id);
     }
+    
+    return deletedIds;
   }
 
   /// Delete logs older than 3 hours

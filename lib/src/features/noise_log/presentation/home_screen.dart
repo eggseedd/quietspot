@@ -106,12 +106,9 @@ class HomeScreen extends ConsumerWidget {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Noise log deleted')),
                       );
-                      // Refresh the data
-                      final currentUserId = ref.read(currentUserIdProvider);
-                      if (currentUserId != null) {
-                        ref.refresh(noiseLogsProvider(currentUserId));
-                      }
                     }
+                    // Invalidate the provider to trigger a refresh  
+                    ref.invalidate(noiseLogsProvider);
                   } catch (e) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(

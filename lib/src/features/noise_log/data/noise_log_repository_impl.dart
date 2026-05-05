@@ -14,8 +14,14 @@ class NoiseLogRepositoryImpl implements NoiseLogRepository {
 
   @override
   Future<void> addNoiseLog(NoiseLogModel log) async {
-    // Delete old logs at the same location
-    await deleteOldLogsAtLocation(log.userId, log.latitude, log.longitude);
+    // Delete old logs at the same location (both locally and in Firestore)
+    final deletedIds = await deleteOldLogsAtLocation(log.userId, log.latitude, log.longitude);
+    
+    // Soft-delete old logs in Firestore asynchronously
+    for (final logId in deletedIds) {
+      _softDeleteOldLogRemotelyAsync(logId);
+    }
+    
     // Add the new log locally
     await localDataSource.insertNoiseLog(log);
     // Sync to Firestore asynchronously (don't await - fire and forget)
@@ -24,13 +30,21 @@ class NoiseLogRepositoryImpl implements NoiseLogRepository {
 
   @override
   Future<void> deleteNoiseLog(String logId) async {
+    // Soft delete locally by marking as deleted
     await localDataSource.deleteNoiseLog(logId);
+    // Soft-delete from Firestore asynchronously
+    _softDeleteOldLogRemotelyAsync(logId);
   }
 
   @override
   Future<List<NoiseLogModel>> fetchNoiseLogs(String userId) async {
     // Clean up expired logs before fetching
     await deleteExpiredLogs();
+    
+    // Sync logs from Firestore to local DB (for users who reinstalled app)
+    await _syncLogsFromFirestore(userId);
+    
+    // Return logs from local DB
     return localDataSource.fetchLogsForUser(userId);
   }
 
@@ -47,12 +61,12 @@ class NoiseLogRepositoryImpl implements NoiseLogRepository {
   }
 
   @override
-  Future<void> deleteOldLogsAtLocation(
+  Future<List<String>> deleteOldLogsAtLocation(
     String userId,
     double latitude,
     double longitude,
   ) async {
-    await localDataSource.deleteOldLogsAtLocation(userId, latitude, longitude);
+    return await localDataSource.deleteOldLogsAtLocation(userId, latitude, longitude);
   }
 
   // ============ Remote Operations ============
@@ -140,6 +154,44 @@ class NoiseLogRepositoryImpl implements NoiseLogRepository {
     } catch (e) {
       print('Background update failed: $e');
       // Don't throw
+    }
+  }
+
+  /// Soft-delete old log from Firestore without blocking
+  Future<void> _softDeleteOldLogRemotelyAsync(String logId) async {
+    try {
+      await remoteDataSource.softDeleteNoiseLog(logId);
+    } catch (e) {
+      print('Background deletion failed: $e');
+      // Don't throw - let the app continue
+    }
+  }
+
+  /// Sync logs from Firestore to local DB (e.g., after app reinstall)
+  /// Filters out expired logs (older than 3 hours)
+  Future<void> _syncLogsFromFirestore(String userId) async {
+    try {
+      final remoteLogs = await remoteDataSource.fetchLogsForUser(userId);
+      if (remoteLogs.isEmpty) return;
+
+      // Filter out expired logs (keep only logs within 3 hours)
+      final now = DateTime.now();
+      final threeHoursAgo = now.subtract(const Duration(hours: 3));
+      
+      final validLogs = remoteLogs.where((log) {
+        // Skip deleted logs
+        if (log.isDeleted) return false;
+        // Skip logs older than 3 hours
+        return log.timestamp.isAfter(threeHoursAgo);
+      }).toList();
+
+      // Insert or update valid logs to local DB (handles duplicates gracefully)
+      for (final log in validLogs) {
+        await localDataSource.insertOrUpdateNoiseLog(log);
+      }
+    } catch (e) {
+      print('Error syncing logs from Firestore: $e');
+      // Don't throw - let the app continue with whatever is in local DB
     }
   }
 }
